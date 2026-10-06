@@ -1,5 +1,5 @@
 <#
-  Windows runner — the equivalent of `make <target>` for students without make.
+  Windows runner - the equivalent of `make <target>` for students without make.
 
   Works in Windows PowerShell 5.1 (powershell.exe) and PowerShell 7+ (pwsh).
 
@@ -12,7 +12,7 @@
       .\lab.ps1 verify
 
   Every target maps 1:1 to the make target of the same name, so docs/GUIDE.md applies
-  as written — just substitute `.\lab.ps1 x` for `make x`.
+  as written - just substitute `.\lab.ps1 x` for `make x`.
 #>
 param(
     [Parameter(Position = 0)] [string] $Target = "help",
@@ -21,6 +21,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
+
+# Python may inherit cp1252 from Windows PowerShell 5.1, which cannot print the
+# Unicode tables used by the lab scripts.
+$env:PYTHONUTF8 = '1'
+$env:PYTHONIOENCODING = 'utf-8'
 
 $VenvPy = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 $Port   = if ($env:LAB_SERVER_PORT) { $env:LAB_SERVER_PORT } else { '8080' }
@@ -45,7 +50,7 @@ function Locust {
 switch ($Target) {
     'help' {
         Write-Host ""
-        Write-Host "Day 20 lab — Windows runner" -ForegroundColor Cyan
+        Write-Host "Day 20 lab - Windows runner" -ForegroundColor Cyan
         Write-Host "Usage:  .\lab.ps1 <target>"
         Write-Host ""
         Write-Host "Setup (00)"
@@ -84,7 +89,10 @@ switch ($Target) {
         Write-Host ""
     }
 
-    'probe'   { & $SysPy labs\00-setup\detect-hardware.py }
+    'probe'   {
+        & $SysPy labs\00-setup\detect-hardware.py
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
     'setup'   {
         if (-not (Test-Path '.venv')) { & $SysPy -m venv .venv }
         & $VenvPy -m pip install --upgrade pip wheel | Out-Null
